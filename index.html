@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Halves</title>
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#111311" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Halves">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Loading -->
+    <section id="view-loading" class="view center">
+      <div class="spinner" aria-label="Loading"></div>
+    </section>
+
+    <!-- Not configured -->
+    <section id="view-setup" class="view center" hidden>
+      <div class="card narrow">
+        <h1>Almost there</h1>
+        <p class="muted">Add your Supabase URL and anon key to <code>config.js</code>, then reload. The README walks you through it.</p>
+      </div>
+    </section>
+
+    <!-- Sign in -->
+    <section id="view-login" class="view center" hidden>
+      <form id="login-form" class="card narrow" autocomplete="on">
+        <div class="logo" aria-hidden="true"><span></span></div>
+        <h1>Halves</h1>
+        <label>Email<input id="login-email" type="email" autocomplete="username" required></label>
+        <label>Password<input id="login-password" type="password" autocomplete="current-password" required></label>
+        <p id="login-error" class="error" hidden></p>
+        <button class="btn primary block" type="submit">Sign in</button>
+      </form>
+    </section>
+
+    <!-- First-time name -->
+    <section id="view-name" class="view center" hidden>
+      <form id="name-form" class="card narrow">
+        <h1>What should we call you?</h1>
+        <p class="muted">This is the name your partner sees.</p>
+        <label>Your name<input id="name-input" maxlength="40" required></label>
+        <p id="name-error" class="error" hidden></p>
+        <button class="btn primary block" type="submit">Continue</button>
+      </form>
+    </section>
+
+    <!-- Main -->
+    <section id="view-main" class="view" hidden>
+      <header class="topbar">
+        <div class="brand"><div class="logo sm" aria-hidden="true"><span></span></div>Halves</div>
+        <button id="menu-btn" class="icon-btn" aria-label="Menu">
+          <svg viewBox="0 0 24 24" width="22" height="22"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+        </button>
+      </header>
+
+      <div class="tabs" role="tablist">
+        <button role="tab" data-tab="activity" aria-selected="true">Activity</button>
+        <button role="tab" data-tab="overview" aria-selected="false">Overview</button>
+      </div>
+
+      <div id="tab-activity">
+      <div id="balance" class="balance">
+        <div id="balance-label" class="balance-label">All settled up</div>
+        <div id="balance-amount" class="balance-amount">R0</div>
+        <div id="balance-sub" class="balance-sub"></div>
+        <button id="settle-btn" class="btn ghost sm">Settle up</button>
+      </div>
+
+      <div id="partner-banner" class="banner" hidden>Waiting for your partner to sign in for the first time. Until then you can only log things you paid for.</div>
+
+      <nav id="filters" class="chips scroll" aria-label="Filter by category"></nav>
+
+      <main id="list" class="list"></main>
+      </div>
+
+      <div id="tab-overview" hidden>
+        <div id="ov-range" class="seg" role="group" aria-label="Period">
+          <button data-range="day">Day</button>
+          <button data-range="week">Week</button>
+          <button data-range="month">Month</button>
+          <button data-range="year">Year</button>
+        </div>
+        <div class="period-nav">
+          <button id="ov-prev" class="icon-btn" aria-label="Previous period">
+            <svg viewBox="0 0 24 24" width="22" height="22"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div id="ov-label" class="period-label"></div>
+          <button id="ov-next" class="icon-btn" aria-label="Next period">
+            <svg viewBox="0 0 24 24" width="22" height="22"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="ov-total">
+          <div class="balance-label">Spent together</div>
+          <div id="ov-amount" class="balance-amount">R0</div>
+          <div id="ov-compare" class="ov-compare"></div>
+          <div id="ov-who" class="ov-who"></div>
+        </div>
+
+        <div id="ov-chart-wrap" class="ov-section">
+          <div class="ov-chart-head"><span id="ov-chart-title" class="field-label">Spending</span><span id="ov-chart-sel" class="ov-chart-sel"></span></div>
+          <div id="ov-chart" class="chart"></div>
+        </div>
+
+        <div class="ov-section">
+          <div class="field-label">By category</div>
+          <div id="ov-cats"></div>
+        </div>
+      </div>
+
+      <button id="add-btn" class="fab" aria-label="Add expense">
+        <svg viewBox="0 0 24 24" width="28" height="28"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+      </button>
+    </section>
+  </div>
+
+  <!-- Expense sheet -->
+  <div id="sheet-expense" class="sheet-wrap" hidden>
+    <div class="scrim" data-close></div>
+    <form id="expense-form" class="sheet" novalidate>
+      <div class="grab"></div>
+      <div class="sheet-head">
+        <h2 id="expense-heading">Add expense</h2>
+        <button type="button" class="icon-btn" data-close aria-label="Close">
+          <svg viewBox="0 0 24 24" width="22" height="22"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <div class="amount-field">
+        <span>R</span>
+        <input id="f-amount" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="Amount">
+      </div>
+      <input id="f-title" class="text-field" placeholder="What was it for?" maxlength="120" aria-label="Description">
+
+      <div class="field-label">Category</div>
+      <div id="f-categories" class="chips wrap"></div>
+
+      <div class="field-label">How should it be split?</div>
+      <div id="f-splits" class="split-grid"></div>
+      <p id="f-split-preview" class="preview"></p>
+
+      <div class="row-2">
+        <label class="small-label">Date<input id="f-date" type="date"></label>
+        <label class="small-label">Note<input id="f-note" placeholder="Optional" maxlength="200"></label>
+      </div>
+
+      <p id="expense-meta" class="meta"></p>
+      <p id="expense-error" class="error" hidden></p>
+
+      <div class="sheet-actions">
+        <button type="button" id="delete-btn" class="btn danger" hidden>Delete</button>
+        <button type="submit" id="save-btn" class="btn primary grow">Save</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Settle sheet -->
+  <div id="sheet-settle" class="sheet-wrap" hidden>
+    <div class="scrim" data-close></div>
+    <form id="settle-form" class="sheet" novalidate>
+      <div class="grab"></div>
+      <div class="sheet-head">
+        <h2 id="settle-heading">Settle up</h2>
+        <button type="button" class="icon-btn" data-close aria-label="Close">
+          <svg viewBox="0 0 24 24" width="22" height="22"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div id="s-direction" class="split-grid two"></div>
+      <div class="amount-field">
+        <span>R</span>
+        <input id="s-amount" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="Amount">
+      </div>
+      <p id="s-preview" class="preview"></p>
+      <div class="row-2">
+        <label class="small-label">Date<input id="s-date" type="date"></label>
+        <label class="small-label">Note<input id="s-note" placeholder="e.g. EFT" maxlength="200"></label>
+      </div>
+      <p id="settle-meta" class="meta"></p>
+      <p id="settle-error" class="error" hidden></p>
+      <div class="sheet-actions">
+        <button type="button" id="settle-delete-btn" class="btn danger" hidden>Delete</button>
+        <button type="submit" class="btn primary grow">Record payment</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Menu sheet -->
+  <div id="sheet-menu" class="sheet-wrap" hidden>
+    <div class="scrim" data-close></div>
+    <div class="sheet">
+      <div class="grab"></div>
+      <p id="menu-who" class="muted"></p>
+      <button id="rename-btn" class="btn ghost block">Change my name</button>
+      <button id="export-btn" class="btn ghost block">Export CSV</button>
+      <button id="signout-btn" class="btn ghost block">Sign out</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
